@@ -3,8 +3,6 @@ import { ApiError } from "../utils/apiErrors.js";
 import { User } from "../models/userModel.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/apiResponse.js";
-import jwt from "jsonwebtoken";
-import mongoose from "mongoose";
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -60,6 +58,7 @@ const registerUser = asyncHandler(async (req, res) => {
   //console.log(req.files);
 
   const avatarLocalPath = req.files?.avatar[0]?.path; //req.file is method from multer
+
   //  const coverImageLocalPath = req.files?.coverImage[0]?.path;
   // This is not working when we not pass coverImage, because cover image is not necessary
   // we don't check coverimage like avatar local path so it give error so write below code that check
@@ -106,14 +105,15 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, createdUser, "User registered Successfully"));
 });
 
-const loginUser = asyncHandler(async (req, res) => {
-  // req body -> data
-  // username or email
-  //find the user
-  //password check
-  //access and referesh token
-  //send secure cookie
+// Steps for Login user
+// req body -> data
+// username or email
+// find the user
+// password check
+// access and referesh token
+// send secure cookie
 
+const loginUser = asyncHandler(async (req, res) => {
   const { email, username, password } = req.body;
   console.log(email);
 
@@ -121,7 +121,6 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "username or email is required");
   }
 
-  // Here is an alternative of above code based on logic discussed in video:
   // if (!(username || email)) {
   //     throw new ApiError(400, "username or email is required")
 

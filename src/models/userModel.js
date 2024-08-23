@@ -54,7 +54,7 @@ const userSchema = new Schema(
 
 //pre is mongoose middleware hook, when save document just before call this hook,
 // we also use save, validate, remove, etc
-//this process is cyptography,means it take time, so use async await
+//bcrypt process is cyptography,means it take time, so use async await
 userSchema.pre("save", async function (next) { 
     if(!this.isModified("password")) return next();
 
