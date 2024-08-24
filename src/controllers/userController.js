@@ -340,7 +340,7 @@ const updateUserAvatar = asyncHandler(async(req, res) => {
 const updateUserCoverImage = asyncHandler(async(req, res) => {
 
     //implement delete old image
-    
+
     const coverImageLocalPath = req.file?.path
 
     if (!coverImageLocalPath) {
@@ -371,7 +371,91 @@ const updateUserCoverImage = asyncHandler(async(req, res) => {
     )
 })
 
+const getUserChannelProfile = asyncHandler(async(req, res) => {
+    // get username from url
+    const {username} = req.params
 
+    if (!username?.trim()) {
+        throw new ApiError(400, "username is missing")
+    }
+
+    // count subscribers of channel (like BCC)
+    //use pipeline strategy -> match , lookup
+    const channel = await User.aggregate([
+        {
+            $match: {
+                username: username?.toLowerCase()
+            }
+        },
+        {
+            // Subscription written as subscriptions in mongo db
+            // channel subscribers?
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "channel",
+                as: "subscribers"
+            }
+        },
+        {
+            // channel/user subscribed to
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscribedTo"
+            }
+        },
+        {
+            // size is to check count
+            // write $ for feilds
+            // addFields used to add more feilds
+            $addFields: {
+                subscribersCount: {
+                    $size: "$subscribers"
+                },
+                channelsSubscribedToCount: {
+                    $size: "$subscribedTo"
+                },
+                isSubscribed: {
+                    //if check in both arrays and object, in our case subscriber object
+                    // subscribers is feild (subscription model), so select subscriber from that
+                    $cond: {
+                        if: {$in: [req.user?._id, "$subscribers.subscriber"]},
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        // project used to give selected items
+        //fullName: 1 , 1 tell this true select this item
+        {
+            $project: {
+                fullName: 1,
+                username: 1,
+                subscribersCount: 1,
+                channelsSubscribedToCount: 1,
+                isSubscribed: 1,
+                avatar: 1,
+                coverImage: 1,
+                email: 1
+
+            }
+        }
+    ])
+
+    if (!channel?.length) {
+        throw new ApiError(404, "channel does not exists")
+    }
+
+    // send only match data in frontend -> for easier -> so use channel[0] ->> instead of channel
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, channel[0], "User channel fetched successfully")
+    )
+})
 
 export {
     registerUser,
@@ -383,7 +467,7 @@ export {
     updateAccountDetails,
     updateUserAvatar,
     updateUserCoverImage,
-    
+    getUserChannelProfile,
 
 
 };
