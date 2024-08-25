@@ -8,6 +8,7 @@ cloudinary.config({
 });
 
 
+
 const uploadOnCloudinary = async (localFilePath) => {
   try {
     // console.log("check",localFilePath)

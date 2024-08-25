@@ -457,6 +457,74 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
     )
 })
 
+//req.user._id -> dont give user id , it give string with object id,
+// but when we use this in (find and find by id) mongoose behind the scene handle everything
+
+
+const getWatchHistory = asyncHandler(async(req, res) => {
+    const user = await User.aggregate([
+        {
+            $match: {
+              //  _id:req.user._id -> not give id, moongose not working here, aggregation pipeline goes directly
+                _id: new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "watchHistory",
+                foreignField: "_id",
+                as: "watchHistory",
+                // we get array of document of id
+                // for finding out owner use sub pipeline
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            // now the owner(user has many feilds but we want selected) so use again sub pipeline
+                            pipeline: [
+                                {
+                                    $project: {
+                                        fullName: 1,
+                                        username: 1,
+                                        avatar: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        // lookup gives aray and we need first value of it
+                        // in this step we need 0 location of every document 
+                        $addFields:{
+                            owner:{
+                                //$first retrieves the value of a specified field from the
+                                // first document in each group of documents.
+                                $first: "$owner"
+                                // now in frontend they get values using owner.
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            //send data -> need first entry of array -> then watch history
+            user[0].watchHistory,
+            "Watch history fetched successfully"
+        )
+    )
+})
+
 export {
     registerUser,
     loginUser,
@@ -468,6 +536,6 @@ export {
     updateUserAvatar,
     updateUserCoverImage,
     getUserChannelProfile,
-
+    getWatchHistory,
 
 };
