@@ -388,7 +388,7 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
             }
         },
         {
-            // Subscription written as subscriptions in mongo db
+            // Subscription written as subscriptions(lower and plural) in mongo db
             // channel subscribers?
             $lookup: {
                 from: "subscriptions",
@@ -409,7 +409,7 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
         {
             // size is to check count
             // write $ for feilds
-            // addFields used to add more feilds
+            // addFields -> used to add more feilds
             $addFields: {
                 subscribersCount: {
                     $size: "$subscribers"
@@ -418,7 +418,7 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
                     $size: "$subscribedTo"
                 },
                 isSubscribed: {
-                    //if check in both arrays and object, in our case subscriber object
+                    //if -> check in both case arrays and object, in our case subscriber is object
                     // subscribers is feild (subscription model), so select subscriber from that
                     $cond: {
                         if: {$in: [req.user?._id, "$subscribers.subscriber"]},
